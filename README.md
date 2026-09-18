@@ -98,6 +98,24 @@ step 文件一次性读进来会挤掉真正需要的工作记忆。
 
 它**只含框架搭法，不含运行数据**：`run/` 与 `heldout-store/` 已被排除，详见该目录的 README。
 
+### 跑完之后去哪看
+
+每次运行收尾会**自动渲染观测台**——论坛、排行榜、监控矩阵与完整性状态合成一页 HTML：
+
+    <run>/reports/dashboard.html
+
+论坛本身是文件式的哈希绑定记录库（不是聊天室）。人类可读的原文在
+`<run>/forum/findings/*.md`，每条 finding 一个文件，带分数表与闸门表。
+`reports/final.md` 末尾有一节 `where to read this run`，把这次运行的每个读面列成绝对路径。
+
+任何时候都可以重新渲染或起实时页：
+
+    python skills/aar-harness/scripts/dashboard.py render --run <run>
+    python skills/aar-harness/scripts/dashboard.py serve  --run <run>   # 127.0.0.1:8787
+
+> `aar.py forum digest` **不是给人看的**：它的输出被不可信同伴哨兵包着，因为那是注入
+> 研究者 prompt 的防提示注入包装。
+
 ## 依赖
 
 无第三方依赖：脚本全部是 Python 标准库，需要 Python 3 与 PowerShell 7（`pwsh`）。

@@ -608,8 +608,10 @@ def run_loop(args):
     A.rebuild_leaderboard(run)
     report = write_report(run, {"stop_reason": stop_reason, "started_at": started,
                                 "ended_at": A.utcnow(), "counts": counts, "driver": args.driver})
+    dashboard = render_dashboard(run, title=(A.load_run_config(run) or {}).get("title"))
     log("run stop: " + stop_reason + " " + json.dumps(counts), run)
-    return {"stop_reason": stop_reason, "counts": counts, "report": str(report)}
+    return {"stop_reason": stop_reason, "counts": counts, "report": str(report),
+            "forum": str(A.run_paths(run)["forum_findings"]), "dashboard": dashboard}
 
 
 # ---------------------------------------------------------------- report
@@ -684,10 +686,58 @@ def write_report(run, meta):
     lines.append("- Held-out item text cannot stay secret when the held-out benchmark is public; item access is the defence, not identity secrecy.")
     lines.append("- Retrieval tier: " + str((cfg.get("retrieval") or {}).get("tier", "unknown")))
     lines.append("")
+    lines.append("## where to read this run")
+    lines.append("")
+    lines.append("The finding forum is a file-based, hash-bound record store, not a chat room.")
+    lines.append("Its reading surfaces, for a human operator:")
+    lines.append("")
+    lines.append("- forum findings, one human-readable markdown file per finding:")
+    lines.append("    " + str(rp["forum_findings"]))
+    lines.append("- observatory page, the forum plus leaderboard, monitor matrix and integrity status in one HTML:")
+    lines.append("    " + str(rp["reports"] / "dashboard.html"))
+    lines.append("- leaderboard: " + str(rp["leaderboard_md"]) + "  |  " + str(rp["leaderboard"]))
+    lines.append("- per-method scores and gates: " + str(rp["eval"]) + "/<method_id>/")
+    lines.append("- researcher traces, the audit input: " + str(rp["traces"]))
+    lines.append("- post-hoc review and audit verdicts, once review.py has run:")
+    lines.append("    " + str(rp["run"] / "review") + "  |  " + str(rp["run"] / "audit"))
+    lines.append("")
+    lines.append("Regenerate or serve the observatory at any time:")
+    lines.append("")
+    lines.append("    python " + str(HERE / "dashboard.py") + " render --run " + str(rp["run"]))
+    lines.append("    python " + str(HERE / "dashboard.py") + " serve  --run " + str(rp["run"]))
+    lines.append("")
+    lines.append("Note: `aar.py forum digest` is NOT a human view. Its output is wrapped in the")
+    lines.append("untrusted-peer sentinel because it is injected into researcher prompts.")
+    lines.append("")
     A.atomic_write_text(rp["reports"] / "final.md", NL.join(lines) + NL)
     A.atomic_write_json(rp["reports"] / "final.json",
                         {"meta": meta, "leaderboard": board, "verification": verification, "exclusions": exclusions})
     return rp["reports"] / "final.md"
+
+
+def render_dashboard(run, title=None):
+    """Best-effort observatory render so the operator has a reading surface.
+
+    Called AFTER write_report on purpose: the page reads reports/final.json for its
+    selection/held-out section, so rendering earlier would publish a stale page.
+    A dashboard failure must never affect the run, so everything here is contained.
+    """
+    rp = A.run_paths(run)
+    page = rp["reports"] / "dashboard.html"
+    try:
+        cmd = [sys.executable, str(HERE / "dashboard.py"), "render", "--run", str(rp["run"])]
+        if title:
+            cmd += ["--title", str(title)]
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300,
+                              encoding="utf-8", errors="replace")
+        if proc.returncode == 0 and page.exists():
+            log("observatory: " + str(page), run)
+            return str(page)
+        tail = ((proc.stdout or "") + (proc.stderr or ""))[-200:].replace(NL, " ")
+        log("WARNING: dashboard render failed (exit " + str(proc.returncode) + "): " + tail, run)
+    except Exception as exc:
+        log("WARNING: dashboard render raised " + type(exc).__name__ + ": " + str(exc)[:200], run)
+    return None
 
 
 def main(argv=None):
@@ -719,7 +769,10 @@ def main(argv=None):
     if args.report_only:
         report = write_report(args.run, {"stop_reason": "report regenerated on request", "started_at": None,
                                          "ended_at": A.utcnow(), "counts": {}, "driver": "n/a"})
-        print(json.dumps({"report": str(report)}, indent=2))
+        dashboard = render_dashboard(args.run, title=(A.load_run_config(args.run) or {}).get("title"))
+        print(json.dumps({"report": str(report),
+                          "forum": str(A.run_paths(args.run)["forum_findings"]),
+                          "dashboard": dashboard}, indent=2))
         return 0
     result = run_loop(args)
     print(json.dumps(result, indent=2, default=str))
