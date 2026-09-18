@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Automated research harness skill",
   "owner": {
-    "name": "starry",
+    "name": "starry-cpu",
     "email": "3299457867@qq.com"
   },
   "metadata": {
@@ -15,11 +15,7 @@
     {
       "name": "aar-harness",
       "description": "Parallel AI-researcher harness with pre-registration, held-out generalization checks and a cheating audit.",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skills/aar-harness"
-      ]
+      "source": "./"
     }
   ]
 }

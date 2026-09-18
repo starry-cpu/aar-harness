@@ -20,7 +20,7 @@
 这是**唯一在本机被完整验证过的**安装路线（skill 本体 43 个文件全部到位，测试全绿）。
 
 ```powershell
-git clone https://github.com/starry/aar-harness
+git clone https://github.com/starry-cpu/aar-harness
 pwsh -File aar-harness/skills/aar-harness/install.ps1 -Global -RunTests
 ```
 
@@ -39,12 +39,22 @@ pwsh -File skills/aar-harness/install.ps1 -RunTests
 ## 装到 Claude Code
 
 ```
-/plugin marketplace add starry/aar-harness
+/plugin marketplace add starry-cpu/aar-harness
 /plugin install aar-harness@aar-harness
 ```
 
 本仓库同时是一个自托管 marketplace（`.claude-plugin/marketplace.json`，`source: "./"`），
-插件内容就在仓库根，skills 路径是 `./skills/aar-harness`。
+插件内容就在仓库根，skill 在 `skills/aar-harness/`。
+
+已在本机 Claude Code 2.1.175 实测：安装后 `claude plugin list` 显示 `Status: √ enabled`，
+`claude plugin details` 显示 `Skills (1) aar-harness`，插件缓存
+（`~/.claude/plugins/cache/aar-harness/`）里 `references/`（22 个文件）与 `scripts/`（19 个文件）**完整**。
+
+> **注意：这条路线不会把 skill 装进 DSH 的 skills 根。** 实测安装后
+> `~/.agents/skills/aar-harness` 与 `~/.claude/skills/aar-harness` **都不存在**，
+> `~/.agents/.skill-lock.json` 里也没有 `aar-harness` 条目——插件只落在
+> `~/.claude/plugins/cache/`。所以**要让 DSH 用上它，请走上面的手动路线**
+> （`install.ps1 -Global`）。Claude Code 与 DSH 是两条落点独立的安装路线。
 
 ## 怎么用
 

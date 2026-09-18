@@ -3,9 +3,9 @@
   "description": "Automated research harness: K parallel AI researchers iterate propose -> pre-register -> monitored execution -> score -> leaderboard, producing conclusions with held-out generalization checks, a post-hoc cheating audit, and a hash-bound evidence chain. Domain-agnostic: benchmarks, method space and regression gates all come from the user's scenario at run time.",
   "version": "0.1.0",
   "author": {
-    "name": "starry",
+    "name": "starry-cpu",
     "email": "3299457867@qq.com"
   },
-  "repository": "https://github.com/starry/aar-harness.git",
-  "homepage": "https://github.com/starry/aar-harness#readme"
+  "repository": "https://github.com/starry-cpu/aar-harness.git",
+  "homepage": "https://github.com/starry-cpu/aar-harness#readme"
 }
