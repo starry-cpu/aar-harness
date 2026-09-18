@@ -1,0 +1,35 @@
+[
+  {
+    "id": "uniform",
+    "text": "workload-spec {\"dist\": \"uniform\", \"keys\": 512, \"nreq\": 4000, \"seed\": 11}",
+    "spec": {
+      "dist": "uniform",
+      "keys": 512,
+      "nreq": 4000,
+      "seed": 11
+    }
+  },
+  {
+    "id": "zipf",
+    "text": "workload-spec {\"alpha\": 1.2, \"dist\": \"zipf\", \"keys\": 256, \"nreq\": 4000, \"seed\": 22}",
+    "spec": {
+      "dist": "zipf",
+      "keys": 256,
+      "nreq": 4000,
+      "alpha": 1.2,
+      "seed": 22
+    }
+  },
+  {
+    "id": "scan",
+    "text": "workload-spec {\"dist\": \"scanmix\", \"hot\": 64, \"hot_p\": 0.4, \"keys\": 2048, \"nreq\": 8000, \"seed\": 33}",
+    "spec": {
+      "dist": "scanmix",
+      "keys": 2048,
+      "hot": 64,
+      "hot_p": 0.4,
+      "nreq": 8000,
+      "seed": 33
+    }
+  }
+]

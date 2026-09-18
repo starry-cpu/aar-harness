@@ -1,0 +1,14 @@
+{
+  "name": "schema_aware（手写参考）",
+  "per_bench": {
+    "point": 0.9994002299118672,
+    "rangesort": 0.7684514267393395,
+    "joinagg": 0.15827188268133152
+  },
+  "aggregate": 0.4953590373396044,
+  "held_out": {
+    "bench": "sensors",
+    "score": 0.580001333540773
+  },
+  "note": "studies/sqlite-index/tuners/schema_aware.py 经 runner.py 实测（seed 7，与 run_config.runner 一致）。per_bench/aggregate 是三条评分基准上的对比条；held_out.score 是同一制品在封存 sensors 上的分数，页面里标为「参考实现」——它不是基线：本域 score = 1 - cost/baseline_cost，未调优基线的分数恒为 0.0。dashboard.py 只读这个文件，从不写它；reference 为空时页面整组对比条不渲染。"
+}

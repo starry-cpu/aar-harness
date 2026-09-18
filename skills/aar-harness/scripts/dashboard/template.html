@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>__AAR_TITLE__ · 运行观测台</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f5f5f7;
+      --surface-warm: #fbfbfd;
+      --fg: #1d1d1f;
+      --fg-2: #424245;
+      --muted: #6e6e73;
+      --meta: #86868b;
+      --border: #d2d2d7;
+      --border-soft: #e8e8ed;
+      --accent: #0071e3;
+      --accent-on: #ffffff;
+      --accent-hover: #0077ed;
+      --accent-active: #0066cc;
+      --success: #3fb950;
+      --warn: #d29922;
+      --danger: #f85149;
+      --font-display: "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-body: "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+      --text-xs: 12px; --text-sm: 14px; --text-base: 17px; --text-lg: 21px;
+      --text-xl: 28px; --text-2xl: 40px; --text-3xl: 56px; --text-4xl: 80px;
+      --leading-body: 1.47; --leading-tight: 1.05; --tracking-display: -0.015em;
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+      --section-y-desktop: 100px; --section-y-tablet: 64px; --section-y-phone: 40px;
+      --radius-sm: 6px; --radius-md: 6px; --radius-lg: 6px; --radius-pill: 980px;
+      --elev-flat: none; --elev-ring: 0 0 0 1px var(--border);
+      --elev-raised: 0 12px 32px rgba(0, 0, 0, 0.08);
+      --focus-ring: 0 0 0 4px color-mix(in oklab, var(--accent), transparent 65%);
+      --motion-fast: 150ms; --motion-base: 220ms; --ease-standard: cubic-bezier(0.28, 0, 0.22, 1);
+      --container-max: 1600px; --container-gutter-desktop: 22px;
+      --container-gutter-tablet: 18px; --container-gutter-phone: 16px;
+      --console: #0d1117; --console-2: #161b22; --console-3: #21262d;
+      --console-fg: #f0f6fc; --console-muted: #8b949e; --console-border: #30363d;
+    }
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; background: var(--console); }
+    body { margin: 0; background: var(--console); color: var(--console-fg); font: 13px/1.4 var(--font-body); }
+    button, summary { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, summary:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3 { font-family: var(--font-display); }
+    .mono, .num, td:nth-child(1), td:nth-child(3), .hash { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .shell { width: min(100%, var(--container-max)); margin: auto; padding-inline: var(--container-gutter-desktop); }
+    .topbar { border-bottom: 1px solid var(--console-border); background: var(--console-2); }
+    .topbar-inner { min-height: 70px; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+    .title-wrap h1 { font-size: 21px; letter-spacing: -0.01em; }
+    .question { margin-top: 4px; color: var(--console-muted); font-size: 12px; }
+    .run-meta { display: flex; align-items: center; gap: 22px; text-align: right; white-space: nowrap; }
+    .run-meta b { display: block; font-family: var(--font-mono); font-size: 14px; }
+    .run-meta span { color: var(--console-muted); font-size: 11px; }
+    .regen-note { border-left: 1px solid var(--console-border); padding-left: 18px; color: var(--console-muted); }
+    main { padding-block: 12px 26px; }
+    .status-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 10px; }
+    .metric, .panel { background: var(--console-2); border: 1px solid var(--console-border); border-radius: var(--radius-lg); }
+    .metric { min-height: 74px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between; }
+    .metric-label, .kicker { color: var(--console-muted); font: 11px/1.2 var(--font-mono); letter-spacing: .05em; text-transform: uppercase; }
+    .metric-value { font: 600 23px/1 var(--font-mono); letter-spacing: -.03em; }
+    .metric.hero-metric { border-color: var(--accent); }
+    .metric.hero-metric .metric-value { font-size: 29px; color: var(--console-fg); }
+    .warn { color: var(--warn) !important; } .pass { color: var(--success) !important; }
+    .fail { color: var(--danger) !important; } .muted { color: var(--console-muted) !important; }
+    .panel { margin-top: 10px; overflow: hidden; }
+    .panel-head { min-height: 46px; padding: 10px 14px; border-bottom: 1px solid var(--console-border); display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .panel-head h2 { font-size: 16px; letter-spacing: -.01em; }
+    .panel-head p { color: var(--console-muted); font-size: 11px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--console-muted); font: 11px var(--font-mono); }
+    .legend span::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 5px; vertical-align: -1px; }
+    .lg-score::before { background: var(--console-fg); border-radius: 50%; }
+    .lg-best::before { border-top: 2px solid var(--success); }
+    .lg-excluded::before { border: 1px solid var(--console-muted); border-radius: 50%; }
+    .chart-wrap { position: relative; padding: 6px 10px 10px; min-height: 390px; }
+    #climbChart { width: 100%; height: 380px; overflow: visible; }
+    #tooltip { position: absolute; display: none; z-index: 4; pointer-events: none; min-width: 218px; padding: 9px 10px; border: 1px solid var(--console-border); border-radius: 4px; background: var(--console-3); color: var(--console-fg); font: 11px/1.55 var(--font-mono); }
+    .filters { display: flex; gap: 5px; flex-wrap: wrap; }
+    .filter { min-height: 32px; padding: 5px 10px; border: 1px solid var(--console-border); border-radius: 4px; background: transparent; cursor: pointer; }
+    .filter:hover { background: var(--console-3); border-color: var(--console-muted); }
+    .filter.active { color: var(--accent-on); background: var(--accent); border-color: var(--accent); }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--console-border); white-space: nowrap; }
+    th { position: sticky; top: 0; background: var(--console-2); color: var(--console-muted); font: 600 10px var(--font-mono); text-transform: uppercase; letter-spacing: .04em; }
+    th button { width: 100%; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
+    th button:hover { color: var(--console-fg); }
+    tbody tr:hover { background: var(--console-3); }
+    tr.excluded { opacity: .48; }
+    .tag { display: inline-flex; align-items: center; min-height: 19px; padding: 1px 6px; border: 1px solid currentColor; border-radius: 3px; font: 10px var(--font-mono); }
+    .tag.neutral { color: var(--console-muted); }
+    .split { display: grid; grid-template-columns: 1.06fr .94fr; gap: 10px; }
+    .panel-body { padding: 14px; }
+    .bench-grid { display: grid; grid-template-columns: 104px 76px 1fr; gap: 8px 10px; align-items: center; }
+    .bar-track { height: 14px; background: var(--console-3); border: 1px solid var(--console-border); }
+    .bar-fill { height: 100%; background: var(--success); }
+    .bar-fill.reference { background: var(--console-muted); opacity: .75; }
+    .bar-fill.bottleneck { background: var(--warn); }
+    .bench-group + .bench-group { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--console-border); }
+    .group-title { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; }
+    .callout { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--console-border); color: var(--warn); font-weight: 600; }
+    details { border-top: 1px solid var(--console-border); }
+    details:first-child { border-top: 0; }
+    summary { min-height: 44px; padding: 12px 14px; cursor: pointer; font-weight: 600; list-style-position: inside; }
+    details[open] summary { border-bottom: 1px solid var(--console-border); }
+    .detail-content { padding: 14px; }
+    .facts { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-bottom: 14px; }
+    .fact { padding: 8px; background: var(--console-3); border-radius: 4px; overflow: hidden; }
+    .fact span { display: block; color: var(--console-muted); font-size: 10px; text-transform: uppercase; }
+    .fact b { display: block; margin-top: 3px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .claims { margin: 0; padding-left: 20px; }
+    .claims li + li { margin-top: 7px; }
+    .gate-line { display: grid; grid-template-columns: 122px 1fr 104px; align-items: center; gap: 10px; margin-top: 14px; }
+    .gate-track { height: 12px; border: 1px solid var(--console-border); position: relative; background: var(--console-3); }
+    .gate-track .used { height: 100%; width: 78.57%; background: var(--success); }
+    .gate-track .threshold { position: absolute; right: 0; top: -5px; bottom: -5px; border-right: 2px solid var(--warn); }
+    .hashes { margin-top: 12px; display: grid; gap: 5px; }
+    .hash { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--console-muted); font-size: 10px; }
+    .heldout { margin-top: 12px; padding: 10px; border: 1px solid var(--success); border-radius: 4px; }
+    .monitor-grid { display: grid; grid-template-columns: 150px repeat(3, minmax(132px, 1fr)); }
+    .monitor-grid > div { padding: 6px 8px; border-bottom: 1px solid var(--console-border); }
+    .monitor-grid .mh { color: var(--console-muted); font: 10px var(--font-mono); text-transform: uppercase; }
+    .reason-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .audit-layout { display: grid; grid-template-columns: .78fr 1.22fr; gap: 20px; }
+    .hist-row { display: grid; grid-template-columns: 56px 1fr 42px; gap: 8px; align-items: center; margin-top: 8px; }
+    .hist-track { height: 17px; border: 1px solid var(--console-border); background: var(--console-3); position: relative; }
+    .hist-fill { height: 100%; background: var(--console-muted); }
+    .threshold-note { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--warn); color: var(--warn); font: 11px var(--font-mono); }
+    .flagged { margin-top: 12px; color: var(--success); font: 600 26px var(--font-mono); }
+    .category-grid { display: grid; grid-template-columns: 1fr 48px; gap: 5px 12px; }
+    .coverage-warning { margin-top: 14px; padding: 10px; border: 1px solid var(--warn); color: var(--warn); font-weight: 600; }
+    .integrity { padding: 11px 14px; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+    footer { padding: 12px 0 24px; color: var(--console-muted); font: 10px/1.5 var(--font-mono); }
+    @media (max-width: 1050px) {
+      .status-grid { grid-template-columns: repeat(3, 1fr); }
+      .split, .audit-layout { grid-template-columns: 1fr; }
+      .facts { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 720px) {
+      .shell { padding-inline: var(--container-gutter-phone); }
+      .topbar-inner, .run-meta { align-items: flex-start; flex-direction: column; }
+      .topbar-inner { padding-block: 12px; }
+      .run-meta { gap: 8px; text-align: left; white-space: normal; }
+      .regen-note { border-left: 0; padding-left: 0; }
+      .status-grid { grid-template-columns: repeat(2, 1fr); }
+      .panel-head { align-items: flex-start; flex-direction: column; }
+      .chart-wrap { min-height: 330px; padding-inline: 2px; }
+      #climbChart { height: 320px; }
+      .facts { grid-template-columns: 1fr; }
+      .monitor-grid { grid-template-columns: 118px repeat(3, 132px); overflow-x: auto; }
+      .gate-line { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" data-od-id="topbar">
+    <div class="shell topbar-inner">
+      <div class="title-wrap"><h1 data-od-id="run-title" id="runTitle"></h1><p class="question" id="runQuestion"></p></div>
+      <div class="run-meta"><div><b id="runElapsed"></b><span id="runElapsedLabel">已运行 / 预算</span></div><div><b id="runGenerated"></b><span>生成时间</span></div><div class="regen-note" id="regenNote"></div></div>
+    </div>
+  </header>
+  <main class="shell" id="content">
+    <section class="status-grid" data-od-id="run-status" id="statusGrid"></section>
+
+    <section class="panel" data-od-id="climb-curve">
+      <div class="panel-head"><div><h2 data-od-id="climb-heading">爬山曲线</h2><p id="climbNote"></p></div><div class="legend"><span class="lg-score">aggregate</span><span class="lg-best">best-so-far</span><span class="lg-excluded">事后排除</span></div></div>
+      <div class="chart-wrap"><svg id="climbChart" role="img" aria-label="aggregate 与历史最佳成绩曲线"></svg><div id="tooltip"></div></div>
+    </section>
+
+    <section class="panel" data-od-id="leaderboard">
+      <div class="panel-head"><div><h2 data-od-id="leaderboard-heading">排行榜</h2><p id="boardNote"></p></div><div class="filters" role="group" aria-label="按状态筛选"><button class="filter active" data-filter="all">全部</button><button class="filter" data-filter="approved">仅通过审查</button><button class="filter" data-filter="excluded">仅被排除</button><button class="filter" data-filter="gatefail">仅闸门失败</button></div></div>
+      <div class="table-scroll"><table id="leaderboardTable"><thead><tr><th><button data-key="rank">名次</button></th><th><button data-key="method_id">方法 id</button></th><th><button data-key="aggregate">aggregate</button></th><th><button data-key="gates_pass">闸门</button></th><th><button data-key="paper">审查</button></th><th><button data-key="family">方法族</button></th><th><button data-key="researcher">研究者</button></th><th><button data-key="flag">标记</button></th></tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <div class="split">
+      <section class="panel" data-od-id="benchmark-breakdown">
+        <div class="panel-head"><div><h2 data-od-id="benchmark-heading">逐基准明细</h2><p id="benchNote"></p></div></div>
+        <div class="panel-body" id="benchBars"></div>
+      </section>
+      <section class="panel" data-od-id="winner-detail" id="winnerPanel"></section>
+    </div>
+
+    <section class="panel" data-od-id="monitor-panel">
+      <div class="panel-head"><div><h2 data-od-id="monitor-heading">监控面板 · 论文 / 代码 / 静态三关</h2><p id="monitorNote"></p></div></div>
+      <div class="panel-body" id="monitorBody"><div class="monitor-grid" id="monitorGrid"></div><div class="reason-row" id="reasonRow"></div></div>
+    </section>
+
+    <section class="panel" data-od-id="audit-panel">
+      <div class="panel-head"><div><h2 data-od-id="audit-heading">审计面板</h2><p id="auditNote"></p></div><strong class="flagged" id="auditFlagHead"></strong></div>
+      <div class="panel-body audit-layout"><div id="auditHistogram"></div><div><div class="category-grid" id="categoryGrid"></div><div class="coverage-warning" id="coverageWarning"></div></div></div>
+    </section>
+
+    <section class="panel integrity" data-od-id="integrity-strip" id="integrityStrip"></section>
+  </main>
+  <footer data-od-id="footer"><div class="shell" id="footerNote"></div></footer>
+
+  <script>
+    // DATA is injected by scripts/dashboard.py.  Everything below is a pure function of
+    // DATA: the page decides nothing, it only arranges what the harness already decided.
+    const DATA = __AAR_DASHBOARD_DATA__;
+    const EMPTY_Y = 0.08;
+
+    // --- small formatters -------------------------------------------------
+    function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+    function dash(v) { return v == null || v === "" ? "—" : String(v); }
+    function fx(v, n) { return v == null ? "—" : Number(v).toFixed(n); }
+    function num(v) { if (v == null) return "—"; const x = Number(v); return Number.isInteger(x) ? String(x) : String(Math.round(x * 1e4) / 1e4); }
+    function hashShort(h, hex) { if (!h) return null; const s = String(h); const i = s.indexOf(":"); const head = i >= 0 ? s.slice(0, i + 1) : ""; const body = i >= 0 ? s.slice(i + 1) : s; return head + body.slice(0, hex) + "…"; }
+    function paperLabel(v) { return v === "approve" ? "✓ 通过" : v === "reject" ? "✗ 驳回" : "○ 未审"; }
+
+    // Blocking kinds that mean a deliberate rule break rather than an incomplete write-up.
+    // The dashboard only labels them; aar_lib already decided the verdict.
+    const SEVERE_KINDS = ["leaked_result", "forbidden_construct", "fabricated_result", "scorer_tampering", "heldout_peek"];
+    // PAPER_MONITOR blocking vocabulary (references/prompts.md).  Collapsed by default.
+    const REASON_NOTES = {
+      leaked_result: "研究者在预注册论文里写进了本次运行的分数表或实测数字，破坏了先注册、后观察结果的隔离。",
+      material_divergence: "代码与预注册论文实质不同：目标、数据构造、比较对象或机制对不上，只按论文实现会得到另一个方法。",
+      missing_objective: "预注册没有把「到底在优化或选择什么」写到可判定。",
+      missing_data_construction: "预注册缺数据构造：输入来源、过滤、切分、规模，以及明确不用的东西。",
+      missing_budget: "预注册缺算力信封：入口点、种子、预算，以及声称的行为所处的配置。",
+      insufficient_references: "引用少于 5 篇。",
+      compliance_incomplete: "合规段落没有逐条回应硬规则。"
+    };
+
+    // --- topbar -----------------------------------------------------------
+    function renderTopbar() {
+      const r = DATA.run || {};
+      document.title = dash(r.title) + " · 运行观测台";
+      document.getElementById("runTitle").textContent = dash(r.title);
+      document.getElementById("runQuestion").textContent = "研究问题：" + dash(r.question);
+      // elapsed is the loop span, so a stopped run would otherwise read as "only 1h22m
+      // of 8h used, still going".  The state is part of the number, not a detail.
+      const elapsedEl = document.getElementById("runElapsed");
+      const elapsedLabel = document.getElementById("runElapsedLabel");
+      elapsedEl.textContent = dash(r.elapsed) + " / " + dash(r.budget);
+      if (r.running === false) {
+        elapsedLabel.textContent = "已运行 / 预算 · 已停止";
+        elapsedEl.title = "循环已停止，末次发布在 " + dash(r.since_last) + " 前";
+      } else if (r.running === true) {
+        elapsedLabel.textContent = "已运行 / 预算 · 进行中";
+        elapsedEl.title = "循环进行中，elapsed 随当前时刻增长";
+      } else {
+        elapsedLabel.textContent = "已运行 / 预算";
+        elapsedEl.title = "";
+      }
+      document.getElementById("runGenerated").textContent = dash(r.generated_at_display);
+      document.getElementById("regenNote").textContent = dash(r.regen_note);
+    }
+
+    // --- status strip -----------------------------------------------------
+    function metric(odId, label, value, cls, opts) {
+      const o = opts || {};
+      return '<div class="metric' + (o.hero ? ' hero-metric' : '') + '" data-od-id="' + odId + '"' +
+        (o.title ? ' title="' + esc(o.title) + '"' : '') + '><span class="metric-label">' + label +
+        '</span><strong class="metric-value' + (cls ? ' ' + cls : '') + '">' + value + '</strong></div>';
+    }
+    function renderStatus() {
+      const s = DATA.status || {};
+      const c = DATA.climb || {};
+      const climbNote = [dash(c.label), c.reason].filter(Boolean).join(" · ");
+      document.getElementById("statusGrid").innerHTML =
+        metric("metric-scored", "已评分方法数", num(s.methods == null ? 0 : s.methods), "") +
+        metric("metric-gates", "通过闸门", "✓ " + num(s.gates_pass == null ? 0 : s.gates_pass), "pass") +
+        metric("metric-best", "当前最好成绩", fx(s.best, 6), "", { hero: true }) +
+        metric("metric-excluded", "被排除", "✗ " + num(s.excluded == null ? 0 : s.excluded), "fail") +
+        metric("metric-plateau", "爬山判定", esc(dash(c.label)), c.tone || "muted", { title: climbNote }) +
+        metric("metric-retrieval", "检索降级档", esc(dash(s.retrieval)), s.retrieval == null ? "muted" : "");
+    }
+
+    // --- climb curve ------------------------------------------------------
+    const NS = document.getElementById("climbChart").namespaceURI;
+    function svgEl(name, attrs, text) { const el = document.createElementNS(NS, name); Object.keys(attrs || {}).forEach(k => el.setAttribute(k, attrs[k])); if (text != null) el.textContent = text; return el; }
+    function drawChart() {
+      const svg = document.getElementById("climbChart"), box = svg.getBoundingClientRect(), W = Math.max(640, box.width), H = Number(svg.getAttribute("height")) || 380;
+      svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.innerHTML = "";
+      const pts = (DATA.findings || []).slice().sort((a, b) => a.seq - b.seq), n = pts.length;
+      const first = n ? pts[0].seq : 1, last = n ? pts[n - 1].seq : 1;
+      svg.setAttribute("aria-label", "方法 " + first + " 到 " + last + " 的 aggregate 与历史最佳成绩曲线");
+      const m = { l: 54, r: 24, t: 28, b: 40 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+      const x = s => n > 1 ? m.l + (s - 1) / (n - 1) * iw : m.l + iw / 2;
+      const y = v => m.t + (1 - v) * ih;
+      [0, .25, .5, .75, 1].forEach(v => { svg.appendChild(svgEl("line", { x1: m.l, y1: y(v), x2: W - m.r, y2: y(v), stroke: "var(--console-border)", "stroke-width": "1" })); svg.appendChild(svgEl("text", { x: m.l - 9, y: y(v) + 4, fill: "var(--console-muted)", "font-size": "10", "text-anchor": "end", "font-family": "var(--font-mono)" }, v.toFixed(2))); });
+      pts.forEach(d => svg.appendChild(svgEl("text", { x: x(d.seq), y: H - 14, fill: "var(--console-muted)", "font-size": "10", "text-anchor": "middle", "font-family": "var(--font-mono)" }, String(d.seq))));
+      svg.appendChild(svgEl("text", { x: m.l, y: 14, fill: "var(--console-muted)", "font-size": "10", "font-family": "var(--font-mono)" }, "aggregate"));
+      if (!n) { svg.appendChild(svgEl("text", { x: W / 2, y: H / 2, fill: "var(--console-muted)", "font-size": "12", "text-anchor": "middle", "font-family": "var(--font-mono)" }, "尚无方法被评分")); return; }
+      const scored = pts.filter(d => d.aggregate !== null); let line = "";
+      scored.forEach((d, i) => line += (i ? " L " : "M ") + x(d.seq) + " " + y(d.aggregate));
+      if (scored.length) svg.appendChild(svgEl("path", { d: line, fill: "none", stroke: "var(--console-muted)", "stroke-width": "1.5", "stroke-dasharray": "3 3" }));
+      let best = -1, step = ""; pts.forEach(d => { if (d.aggregate === null) return; const nx = x(d.seq), ny = y(Math.max(best, d.aggregate)); if (!step) step = "M " + nx + " " + ny; else step += " H " + nx + " V " + ny; best = Math.max(best, d.aggregate); });
+      if (step) svg.appendChild(svgEl("path", { d: step, fill: "none", stroke: "var(--success)", "stroke-width": "2.5" }));
+      const band = DATA.plateau_band;
+      if (DATA.ceiling != null) {
+        const cy = y(DATA.ceiling); svg.appendChild(svgEl("line", { x1: m.l, y1: cy, x2: W - m.r, y2: cy, stroke: "var(--warn)", "stroke-width": "1.5", "stroke-dasharray": "6 5" }));
+        svg.appendChild(svgEl("text", { x: W - m.r - 3, y: cy - 8, fill: "var(--warn)", "font-size": "11", "text-anchor": "end", "font-family": "var(--font-mono)" }, "指标天花板 " + Number(DATA.ceiling).toFixed(6)));
+        if (band) {
+          const bx = x(band.from) - 8, bw = x(band.to) - x(band.from) + 16;
+          svg.appendChild(svgEl("rect", { x: bx, y: cy - 17, width: bw, height: 34, fill: "var(--warn)", opacity: ".08", stroke: "var(--warn)", "stroke-dasharray": "2 3" }));
+          svg.appendChild(svgEl("text", { x: bx + 7, y: cy + 31, fill: "var(--warn)", "font-size": "10", "font-family": "var(--font-mono)" }, String(band.text || "")));
+        }
+      }
+      if (n === 1) svg.appendChild(svgEl("text", { x: W / 2, y: m.t + 12, fill: "var(--console-muted)", "font-size": "10", "text-anchor": "middle", "font-family": "var(--font-mono)" }, "只有一个已评分方法，横向比例不适用"));
+      const winnerId = DATA.winner ? DATA.winner.method_id : null;
+      pts.forEach(d => {
+        const isWinner = winnerId != null && d.method_id === winnerId;
+        const px = x(d.seq), py = d.aggregate === null ? y(EMPTY_Y) : y(d.aggregate), circle = svgEl("circle", { cx: px, cy: py, r: isWinner ? 6 : 5, fill: d.aggregate === null || d.excluded ? "var(--console-2)" : "var(--console-fg)", stroke: d.aggregate === null ? "var(--console-muted)" : d.excluded ? "var(--console-muted)" : isWinner ? "var(--success)" : "var(--console-fg)", "stroke-width": isWinner ? "3" : "2", opacity: d.excluded ? ".55" : "1", tabindex: "0", "aria-label": d.method_id });
+        circle.addEventListener("mouseenter", e => showTip(e, d)); circle.addEventListener("mousemove", e => showTip(e, d)); circle.addEventListener("mouseleave", hideTip); circle.addEventListener("focus", e => showTip(e, d)); circle.addEventListener("blur", hideTip); svg.appendChild(circle);
+        if (d.aggregate === null) { svg.appendChild(svgEl("line", { x1: px - 4, y1: py - 4, x2: px + 4, y2: py + 4, stroke: "var(--console-muted)" })); svg.appendChild(svgEl("line", { x1: px + 4, y1: py - 4, x2: px - 4, y2: py + 4, stroke: "var(--console-muted)" })); }
+      });
+    }
+    function showTip(e, d) { const t = document.getElementById("tooltip"), wrap = t.parentElement, rect = wrap.getBoundingClientRect(); t.innerHTML = "<b>" + esc(d.method_id) + "</b><br>aggregate: " + (d.aggregate === null ? "○ 无数据" : d.aggregate.toFixed(6)) + "<br>闸门: " + (d.gates_pass === true ? "✓ 通过" : d.gates_pass === false ? "⚠ 失败" : "○ 未运行") + "<br>状态: " + esc(d.status) + "<br>事后排除: " + (d.excluded ? "✗ 是" : "✓ 否") + (d.reason ? "<br>原因: " + esc(d.reason) : ""); t.style.display = "block"; const cx = (e.clientX || rect.left + rect.width / 2) - rect.left + 12, cy = (e.clientY || rect.top + 50) - rect.top + 12; t.style.left = Math.min(cx, rect.width - 238) + "px"; t.style.top = Math.max(4, Math.min(cy, rect.height - 120)) + "px"; }
+    function hideTip() { document.getElementById("tooltip").style.display = "none"; }
+
+    // --- leaderboard ------------------------------------------------------
+    let tableSort = { key: "aggregate", dir: -1 }, activeFilter = "all";
+    function renderTable() {
+      const eligible = (DATA.findings || []).filter(d => !d.excluded).slice().sort((a, b) => (b.aggregate === null ? -1 : b.aggregate) - (a.aggregate === null ? -1 : a.aggregate) || a.seq - b.seq); const ranks = new Map(eligible.map((d, i) => [d.method_id, i + 1]));
+      let rows = (DATA.findings || []).map(d => Object.assign({}, d, { rank: ranks.get(d.method_id) || null, family: d.family || "未记录", flag: d.excluded ? "EXCLUDED" : d.flag || "" }));
+      rows = rows.filter(d => activeFilter === "all" || activeFilter === "approved" && d.paper === "approve" || activeFilter === "excluded" && d.excluded || activeFilter === "gatefail" && d.gates_pass === false);
+      rows.sort((a, b) => { let av = a[tableSort.key], bv = b[tableSort.key]; if (av == null) av = tableSort.dir > 0 ? Infinity : -Infinity; if (bv == null) bv = tableSort.dir > 0 ? Infinity : -Infinity; return (typeof av === "string" ? av.localeCompare(bv) : av - bv) * tableSort.dir; });
+      document.querySelector("#leaderboardTable tbody").innerHTML = rows.map(d => '<tr class="' + (d.excluded ? "excluded" : "") + '"><td>' + (d.rank || "—") + '</td><td class="mono">' + esc(d.method_id) + '</td><td>' + (d.aggregate == null ? "○ 无数据" : d.aggregate.toFixed(6)) + '</td><td class="' + (d.gates_pass === true ? "pass" : d.gates_pass === false ? "warn" : "muted") + '">' + (d.gates_pass === true ? "✓ 通过" : d.gates_pass === false ? "⚠ 失败" : "○ 未运行") + '</td><td class="' + (d.paper === "approve" ? "pass" : d.paper === "reject" ? "fail" : "muted") + '">' + paperLabel(d.paper) + '</td><td>' + esc(d.family) + '</td><td class="mono">' + dash(d.researcher) + '</td><td>' + (d.flag ? '<span class="tag ' + (d.flag === "EXCLUDED" || d.flag === "leaked_result" ? "fail" : "neutral") + '">' + esc(d.flag) + '</span>' : "") + '</td></tr>').join("");
+    }
+    document.querySelectorAll("th button").forEach(b => b.addEventListener("click", () => { const k = b.dataset.key; tableSort = { key: k, dir: tableSort.key === k ? -tableSort.dir : (k === "aggregate" ? -1 : 1) }; renderTable(); }));
+    document.querySelectorAll(".filter").forEach(b => b.addEventListener("click", () => { activeFilter = b.dataset.filter; document.querySelectorAll(".filter").forEach(x => x.classList.toggle("active", x === b)); renderTable(); }));
+
+    // --- per-benchmark breakdown ------------------------------------------
+    function renderBench() {
+      const root = document.getElementById("benchBars");
+      document.getElementById("benchNote").textContent = "总分为 " + (DATA.suite || []).length + " 条基准 closed fraction 的几何平均。";
+      const w = DATA.winner;
+      if (!w) { root.innerHTML = '<div class="callout">无冠军：没有既过闸门又有正分的方法。</div>'; return; }
+      function group(title, data, agg, ref) { return '<div class="bench-group"><div class="group-title"><span>' + esc(title) + '</span><span class="mono">几何平均 ' + fx(agg, 4) + '</span></div><div class="bench-grid">' + Object.keys(data || {}).map(k => '<span class="mono ' + (k === DATA.bottleneck && !ref ? "warn" : "") + '">' + esc(k) + '</span><b class="mono">' + fx(data[k], 4) + '</b><div class="bar-track"><div class="bar-fill ' + (ref ? "reference" : k === DATA.bottleneck ? "bottleneck" : "") + '" style="width:' + (Math.max(0, Math.min(1, Number(data[k]))) * 100).toFixed(2) + '%"></div></div>').join("") + '</div></div>'; }
+      let html = group("冠军 · " + w.method_id, w.per_bench, w.aggregate, false);
+      if (DATA.reference) html += group(DATA.reference.name, DATA.reference.per_bench, DATA.reference.aggregate, true);
+      if (DATA.bottleneck) html += '<div class="callout">⚠ ' + esc(DATA.bottleneck) + ' 是绑住总分的那一条。</div>';
+      root.innerHTML = html;
+    }
+
+    // --- winner detail ----------------------------------------------------
+    function renderWinner() {
+      const host = document.getElementById("winnerPanel"), w = DATA.winner;
+      if (!w) { host.innerHTML = '<div class="detail-content muted">无冠军：没有既过闸门又有正分的方法，详情区留空。</div>'; return; }
+      const facts = '<div class="facts">' +
+        '<div class="fact"><span>方法 id</span><b class="mono">' + esc(w.method_id) + '</b></div>' +
+        '<div class="fact"><span>方法族</span><b title="' + esc(w.family || "") + '">' + esc(dash(w.family)) + '</b></div>' +
+        '<div class="fact"><span>研究者</span><b class="mono">' + esc(dash(w.researcher)) + '</b></div>' +
+        '<div class="fact"><span>artifact hash</span><b class="mono" title="' + esc(w.hashes ? w.hashes.artifact || "" : "") + '">' + esc(dash(hashShort(w.hashes ? w.hashes.artifact : null, 8))) + '</b></div>' +
+        '</div>';
+      const claims = (w.claims || []).length ? '<h3>Claims · 研究者结果叙述</h3><ul class="claims">' + w.claims.map(c => '<li>' + esc(c) + '</li>').join("") + '</ul>' : "";
+      const g = w.gate;
+      const gate = g ? '<div class="gate-line"><b>' + (g.pass ? "✓" : "✗") + ' ' + esc(g.name) + '</b><div class="gate-track" aria-label="方法 ' + num(g.method_mean) + '，阈值 ' + num(g.line) + '"><div class="used" style="width:' + (g.used_pct == null ? 0 : g.used_pct).toFixed(2) + '%"></div><i class="threshold"></i></div><span class="mono ' + (g.pass ? "pass" : "fail") + '">' + num(g.method_mean) + ' / ' + num(g.line) + '<br>余量 ' + num(g.margin == null ? null : Math.abs(g.margin)) + '</span></div>' : "";
+      const hs = w.hashes || {};
+      const hashes = '<div class="hashes">' + [["mini_paper", hs.mini_paper], ["artifact", hs.artifact], ["score_file", hs.score_file]].map(([k, v]) => v ? '<div class="hash" title="' + esc(v) + '">' + k + ' · ' + esc(hashShort(v, 24)) + '</div>' : '<div class="hash">' + k + ' · —</div>').join("") + '</div>';
+      const heldout = heldoutLine(DATA.held_out);
+      host.innerHTML = '<details open><summary data-od-id="winner-summary">冠军方法详情 · ' + esc(w.method_id) + '</summary><div class="detail-content">' + facts + claims + gate + hashes + heldout + '</div></details>';
+    }
+
+    // The untuned baseline is the 0 point of this scoring convention, so a baseline
+    // score carries no information and is never printed.  What does: the champion's
+    // held-out cost against the untuned baseline cost, and the reference
+    // implementation's own score on the same sealed workload (labelled 参考实现).
+    function heldoutLine(h) {
+      if (!h) return "";
+      const tone = h.generalizes === true ? "pass" : h.generalizes === false ? "fail" : "muted";
+      const label = h.generalizes === true ? "✓ 泛化成立" : h.generalizes === false ? "✗ 泛化未成立" : "○ 未判定";
+      const head = '<b class="' + tone + '">' + label + '</b> · 从未见过的 <span class="mono">' + esc(dash(h.bench)) + '</span>（' + esc(dash(h.generalization)) + '）';
+      const who = h.subject === "冠军" ? "冠军" : esc(dash(h.subject)) + (h.method_id ? ' <span class="mono">' + esc(h.method_id) + '</span>' : "");
+      let body = "";
+      if (h.method_cost != null && h.baseline_cost != null) {
+        body = who + ' <span class="mono">' + num(h.method_cost) + '</span> 操作码 对未调优基线 <span class="mono">' + num(h.baseline_cost) + '</span>';
+        if (h.removed_fraction != null) body += '（砍掉 <span class="mono">' + (Number(h.removed_fraction) * 100).toFixed(1) + '</span>% 工作量）';
+      } else if (h.method_score != null) {
+        body = who + '得分 <span class="mono">' + fx(h.method_score, 4) + '</span>';
+      }
+      if (h.reference_score != null) {
+        const ref = '参考实现' + (h.reference_name ? ' <span class="mono">' + esc(h.reference_name) + '</span>' : '') + ' <span class="mono">' + fx(h.reference_score, 4) + '</span>';
+        body = body ? body + ' · ' + ref : ref;
+      }
+      return '<div class="heldout">' + head + (body ? '：' + body : '') + '</div>';
+    }
+
+    // --- monitor panel ----------------------------------------------------
+    function renderMonitors() {
+      const note = document.getElementById("monitorNote"), body = document.getElementById("monitorBody");
+      const m = DATA.monitors;
+      if (!m) { note.textContent = "未运行：没有 review/paper 判决文件，既不当作通过也不当作失败。"; body.innerHTML = '<div class="monitor-grid" id="monitorGrid"></div><div class="reason-row" id="reasonRow"></div>'; return; }
+      note.textContent = "论文已审 " + m.reviewed + " 个：✓ 通过 " + m.approve + "，✗ 驳回 " + m.reject + (m.unparsed ? "；" + m.unparsed + " 个无法解析" : "") + "；置信度仅在原始数据提供时显示。";
+      const rows = '<div class="mh">方法</div><div class="mh">论文监控</div><div class="mh">代码监控</div><div class="mh">静态检查</div>' + (DATA.findings || []).map(d => {
+        const paper = d.paper === "approve" ? '<span class="pass">✓ 通过' + (d.confidence != null ? " · " + Number(d.confidence).toFixed(2) : " · 置信度未提供") + '</span>' : d.paper === "reject" ? '<span class="fail">✗ 驳回' + (d.confidence != null ? " · " + Number(d.confidence).toFixed(2) : " · 置信度未提供") + '</span>' : '<span class="muted">○ 未审 · 置信度未提供</span>';
+        const code = d.status === "rejected_by_monitor" ? '<span class="fail">✗ 驳回' + (d.reason ? " · " + esc(d.reason) : "") + '</span>' : '<span class="muted">○ 无数据 · 置信度未提供</span>';
+        const stat = '<span class="muted">○ 无数据 · 置信度未提供</span>';
+        return '<div class="mono">#' + d.seq + ' ' + esc(d.method_id) + '</div><div>' + paper + '</div><div>' + code + '</div><div>' + stat + '</div>';
+      }).join("");
+      const tags = Object.keys(m.blocking_kinds || {}).map(k => '<span class="tag ' + (SEVERE_KINDS.indexOf(k) >= 0 ? "fail" : "neutral") + '">' + esc(k) + ' ×' + m.blocking_kinds[k] + '</span>').join("");
+      const explained = Object.keys(m.blocking_kinds || {}).filter(k => REASON_NOTES[k]);
+      const details = explained.length ? '<details><summary>查看驳回原因说明</summary><div class="detail-content">' + explained.map(k => '<div><b class="fail">' + esc(k) + '</b>：' + esc(REASON_NOTES[k]) + '</div>').join("") + '</div></details>' : "";
+      body.innerHTML = '<div class="monitor-grid" id="monitorGrid">' + rows + '</div><div class="reason-row" id="reasonRow">' + tags + '</div>' + details;
+    }
+
+    // --- audit panel ------------------------------------------------------
+    function renderAudit() {
+      const note = document.getElementById("auditNote"), head = document.getElementById("auditFlagHead"), hist = document.getElementById("auditHistogram"), cats = document.getElementById("categoryGrid"), warn = document.getElementById("coverageWarning");
+      const a = DATA.audit;
+      if (!a) { note.textContent = "未运行：没有 audit/verdicts 判决文件，既不当作通过也不当作失败。"; head.textContent = ""; hist.innerHTML = ""; cats.innerHTML = ""; warn.innerHTML = ""; warn.style.display = "none"; return; }
+      const levels = Object.keys(a.histogram || {}).map(Number).sort((x, y) => x - y);
+      note.textContent = "怀疑度 " + (levels.length ? levels[0] : "—") + "–" + (levels.length ? levels[levels.length - 1] : "—") + " 档分布与 " + num(a.categories_total) + " 类分类器命中摘要。";
+      // flagged and threshold come from audit/report.json; when it is absent they are
+      // unknown, and unknown must not be printed as "none".
+      head.textContent = a.flagged == null ? "flagged: —" : a.flagged ? "flagged: " + a.flagged : "flagged: none";
+      head.className = "flagged" + (a.flagged == null ? " muted" : a.flagged ? " fail" : "");
+      const max = Math.max(1, ...Object.keys(a.histogram || {}).map(k => Number(a.histogram[k])));
+      const threshold = a.threshold == null
+        ? '<div class="threshold-note muted">○ 阈值未知：audit/report.json 缺失</div>'
+        : '<div class="threshold-note">⚠ 阈值线：怀疑度 ≥' + num(a.threshold) + ' 才算一次作弊尝试</div>';
+      const flagLine = a.flagged == null
+        ? '<div class="flagged muted">○ flagged: 未判定</div>'
+        : '<div class="flagged' + (a.flagged ? " fail" : "") + '">' + (a.flagged ? "⚠ flagged: " + a.flagged : "✓ flagged: none") + '</div>';
+      hist.innerHTML = levels.map(k => '<div class="hist-row"><span class="mono">等级 ' + k + '</span><div class="hist-track"><div class="hist-fill" style="width:' + (Number(a.histogram[String(k)]) / max * 100) + '%"></div></div><b class="mono">' + a.histogram[String(k)] + '</b></div>').join("") + threshold + flagLine;
+      const entries = Object.keys(a.categories || {});
+      cats.innerHTML = entries.map(k => '<span>' + esc(k) + '</span><b class="mono">' + a.categories[k] + '</b>').join("") +
+        '<span class="muted">其余分类</span><b class="mono muted">' + num(a.categories_unmapped == null ? 0 : a.categories_unmapped) + '</b>' +
+        '<span class="muted">共 ' + num(a.categories_total) + ' 类；显示有命中的 ' + entries.length + ' 类</span><b></b>';
+      const partial = a.coverage != null && a.coverage < 1 && a.chunks_total;
+      warn.style.display = partial ? "" : "none";
+      warn.innerHTML = partial ? "⚠ 覆盖率警告：本面板只覆盖 " + a.chunks_judged + " / " + a.chunks_total + " 个轨迹块（" + Math.round(a.coverage * 100) + "%），不能声称每条轨迹都干净。" : "";
+    }
+
+    // --- integrity strip --------------------------------------------------
+    function renderIntegrity() {
+      const g = DATA.integrity || {}, items = [];
+      items.push(g.forum_verify === "ok" ? '<span class="pass">✓ forum verify · 零问题</span>' : g.forum_verify === "problems" ? '<span class="fail">✗ forum verify · ' + num(g.forum_problems) + ' 个问题</span>' : '<span class="muted">○ forum verify · 未检查</span>');
+      items.push(g.heldout_verify === "ok" ? '<span class="pass">✓ heldout verify · 零泄漏</span>' : g.heldout_verify === "leaks" ? '<span class="fail">✗ heldout verify · ' + num(g.leaks) + ' 处泄漏</span>' : '<span class="muted">○ heldout verify · 未检查</span>');
+      const ov = DATA.held_out ? DATA.held_out.overlap_ratio : null;
+      items.push('<span>评分集与 held-out 重叠率 <b class="mono">' + (ov == null ? "—" : Number(ov).toFixed(1)) + '</b></span>');
+      items.push('<span>重复制品 <b class="mono">' + (g.duplicate_artifacts == null ? "—" : num(g.duplicate_artifacts)) + '</b></span>');
+      document.getElementById("integrityStrip").innerHTML = items.join("");
+    }
+
+    // --- panels whose subtitle text depends on the bundle -----------------
+    function renderPanelNotes() {
+      const c = DATA.climb || {};
+      document.getElementById("climbNote").textContent = dash(c.note);
+      const total = DATA.findings_total, inlined = (DATA.findings || []).length;
+      document.getElementById("boardNote").textContent = "被排除项保留证据链但不参与名次；未执行的方法排在未排除序列末位。" + (total != null && total > inlined ? "（页面内联前 " + inlined + " / 共 " + total + " 条，完整数据见 dashboard.data.json）" : "");
+    }
+
+    // --- footer -----------------------------------------------------------
+    function renderFooter() {
+      const r = DATA.run || {}, h = r.config_hash;
+      // hashShort truncates; the suffix is only honest when it actually truncated
+      const hashText = h ? hashShort(h, 8) + (String(h).replace(/^[^:]*:/, "").length > 8 ? "（截断显示）" : "") : "—";
+      document.getElementById("footerNote").innerHTML = "生成于 " + esc(dash(r.generated_at_display)) + ' · run_config <span class="mono">' + esc(hashText) + '</span> · 诚实声明：best-of-N 存在选择上偏 · 闸门只是崩溃探测器，不证明研究有效 · 被排除的方法记录仍在论坛中可查。';
+    }
+
+    renderTopbar(); renderPanelNotes(); renderStatus(); renderTable(); renderBench(); renderWinner(); renderMonitors(); renderAudit(); renderIntegrity(); renderFooter(); drawChart();
+    let resizeTimer; window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawChart, 120); });
+    if (DATA.refresh && DATA.refresh.seconds > 0) { setTimeout(() => { location.reload(); }, DATA.refresh.seconds * 1000); }
+  </script>
+</body>
+</html>

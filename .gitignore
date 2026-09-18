@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+examples/*/run/
+examples/*/heldout-store/
+*.log
+.dsh/

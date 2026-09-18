@@ -1,0 +1,14 @@
+[
+  {
+    "id": "point",
+    "text": "workload point over schema main: equality lookups on the order foreign key, half of them also filtered by a low-cardinality status (50 evaluation queries)"
+  },
+  {
+    "id": "rangesort",
+    "text": "workload rangesort over schema main: timestamp range scan ordered by amount, mixed with a status-filtered recency listing (30 evaluation queries)"
+  },
+  {
+    "id": "joinagg",
+    "text": "workload joinagg over schema main: two-table join with GROUP BY, grouped by city in one half and by tier in the other (20 evaluation queries)"
+  }
+]

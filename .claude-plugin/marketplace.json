@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "aar-harness",
+  "version": "0.1.0",
+  "description": "Automated research harness skill",
+  "owner": {
+    "name": "starry",
+    "email": "3299457867@qq.com"
+  },
+  "metadata": {
+    "description": "Automated research harness skill",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "aar-harness",
+      "description": "Parallel AI-researcher harness with pre-registration, held-out generalization checks and a cheating audit.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/aar-harness"
+      ]
+    }
+  ]
+}
