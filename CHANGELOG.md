@@ -6,6 +6,16 @@
 `.claude-plugin/plugin.json` 的 `version`、`.claude-plugin/marketplace.json` 的 `version`
 与 `marketplace.json` 的 `metadata.version`。
 
+## 0.2.1 — 2026-09-18
+
+文档与仓库卫生，**skill 本体无改动**（`skills/aar-harness/` 的内容与 0.2.0 逐字节一致）。
+
+- `.gitignore` 新增 `run/` 与 `heldout-store/`（任意深度）。原来只挡 `examples/*/` 下的——
+  在检出根目录跑研究时，held-out 封印会暴露给 `git add -A`。另加三个运行期 scratch 文件名。
+- README 的 Claude Code 一节补两条实测结论：
+  - 升级必须带 `@marketplace` 后缀（`claude plugin update aar-harness` 会报 not found）；
+  - standard / full 档需要 PATH 上有 `dsh`，只装 Claude Code 的机器只能跑 light 档。
+
 ## 0.2.0 — 2026-09-18
 
 **运行收尾现在会自己产出并指出论坛的读面。**

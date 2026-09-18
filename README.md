@@ -49,12 +49,31 @@ pwsh -File skills/aar-harness/install.ps1 -RunTests
 已在本机 Claude Code 2.1.175 实测：安装后 `claude plugin list` 显示 `Status: √ enabled`，
 `claude plugin details` 显示 `Skills (1) aar-harness`，插件缓存
 （`~/.claude/plugins/cache/aar-harness/`）里 `references/`（22 个文件）与 `scripts/`（19 个文件）**完整**。
+仓库源、插件缓存、DSH 全局安装三处逐文件比对 43/43 一致。
+
+### 升级
+
+```bash
+claude plugin marketplace update aar-harness
+claude plugin update aar-harness@aar-harness      # 必须带 @marketplace 后缀
+```
+
+**`@marketplace` 后缀不能省。** 实测 `claude plugin update aar-harness`（不带后缀）会报
+`× Plugin "aar-harness" not found`，即使 `claude plugin list` 里明明写着
+`aar-harness@aar-harness`。升级后要重启会话才生效，旧版本目录会留在插件缓存里。
 
 > **注意：这条路线不会把 skill 装进 DSH 的 skills 根。** 实测安装后
 > `~/.agents/skills/aar-harness` 与 `~/.claude/skills/aar-harness` **都不存在**，
 > `~/.agents/.skill-lock.json` 里也没有 `aar-harness` 条目——插件只落在
 > `~/.claude/plugins/cache/`。所以**要让 DSH 用上它，请走上面的手动路线**
 > （`install.ps1 -Global`）。Claude Code 与 DSH 是两条落点独立的安装路线。
+
+> **运行前提：standard / full 档需要 PATH 上有 `dsh`。** skill 的自动编排是 DSH 原生的——
+> `orchestrator.py` 用 `dsh --profile headless` spawn 每一个研究者会话，`review.py` 与
+> `lib/agent_run.py` 的 judge 会话同样先 `shutil.which("dsh")`，找不到就抛
+> `dsh CLI not found on PATH`。只装了 Claude Code 的机器上，插件照常安装、skill 照常被发现
+> （名字是 `aar-harness:aar-harness`，Claude Code 会给插件 skill 加命名空间），但**只能跑 light 档**
+> ——light 档由主 agent 直接开 subagent，不 spawn `dsh`。
 
 ## 怎么用
 
