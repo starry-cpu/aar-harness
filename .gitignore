@@ -4,3 +4,15 @@ examples/*/run/
 examples/*/heldout-store/
 *.log
 .dsh/
+
+# Run outputs at any depth. Process data must never be committed, and
+# heldout-store/ is the sealed held-out set: publishing it voids the
+# generalization guarantee. The examples/* lines above are subsumed by these.
+run/
+heldout-store/
+
+# Loose helper scripts that librarian/researcher sessions drop into the cwd
+# while a study runs there. Prefer running studies outside the checkout.
+cr.py
+oa.py
+meta.py
